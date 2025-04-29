@@ -1,0 +1,8 @@
+.fc-daygrid-day {
+    font-size: 14px;
+}
+
+.fc-daygrid-day-number {
+    font-weight: bold;
+    color: #333;
+}
