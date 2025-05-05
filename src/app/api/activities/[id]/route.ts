@@ -1,16 +1,65 @@
+'use server';
+
+import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/app/lib/supabase';
-import { NextResponse } from 'next/server';
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
-    const id = params.id;
-    const body = await req.json();
-    const { result, feedback } = body;
+// GET: 활동 정보 조회
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
 
-    const { data, error } = await supabase.from('activities').update({ result, feedback }).eq('id', id);
+    if (!id) {
+        return NextResponse.json({ error: '활동 ID가 필요합니다.' }, { status: 400 });
+    }
+
+    const { data, error } = await supabase.from('activities').select('*').eq('id', id).single();
+
+    if (error || !data) {
+        return NextResponse.json({ error: error?.message || '활동을 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    return NextResponse.json({ activity: data });
+}
+
+// PUT: 활동 정보 수정
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
+    const { result, feedback, participant_count } = await req.json();
+
+    if (!id || result === undefined || feedback === undefined || participant_count === undefined) {
+        return NextResponse.json({ error: '필수 값이 누락되었습니다.' }, { status: 400 });
+    }
+
+    const { data, error } = await supabase
+        .from('activities')
+        .update({ result, feedback, participant_count })
+        .eq('id', id)
+        .select('*')
+        .maybeSingle();
 
     if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, activity: data });
+    if (!data) {
+        return NextResponse.json({ error: '해당 활동을 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    return NextResponse.json({ activity: data });
+}
+
+// DELETE: 활동 정보 삭제
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
+
+    if (!id) {
+        return NextResponse.json({ error: '활동 ID가 필요합니다.' }, { status: 400 });
+    }
+
+    const { error } = await supabase.from('activities').delete().eq('id', id);
+
+    if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
 }

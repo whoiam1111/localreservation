@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 
 export default function ActivityForm() {
     const router = useRouter();
+    const [region, setRegion] = useState('');
+    const [date, setDate] = useState('');
     const [location, setLocation] = useState('');
     const [startTime, setStartTime] = useState('');
     const [endTime, setEndTime] = useState('');
@@ -13,12 +15,12 @@ export default function ActivityForm() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        const today = new Date().toISOString().split('T')[0]; // 'YYYY-MM-DD'
-
         const newActivity = {
+            region,
+            date,
             location,
-            startTime: `${today}T${startTime}`,
-            endTime: `${today}T${endTime}`,
+            startTime: `${date}T${startTime}`,
+            endTime: `${date}T${endTime}`,
             tool,
         };
 
@@ -33,6 +35,36 @@ export default function ActivityForm() {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+                <label className="block text-sm font-medium">지역</label>
+                <select
+                    value={region}
+                    onChange={(e) => setRegion(e.target.value)}
+                    className="w-full border p-2 rounded"
+                    required
+                >
+                    <option value="">선택하세요</option>
+                    <option value="도봉">도봉</option>
+                    <option value="성북">성북</option>
+                    <option value="노원">노원</option>
+                    <option value="중랑">중랑</option>
+                    <option value="강북">강북</option>
+                    <option value="대학">대학</option>
+                    <option value="새신자">새신자</option>
+                </select>
+            </div>
+
+            <div>
+                <label className="block text-sm font-medium">날짜</label>
+                <input
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    className="w-full border p-2 rounded"
+                    required
+                />
+            </div>
+
             <div>
                 <label className="block text-sm font-medium">장소</label>
                 <input

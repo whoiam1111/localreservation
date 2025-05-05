@@ -11,26 +11,30 @@ interface ActivityBody {
     startTime: string;
     endTime: string;
     tool: string;
+    region: string;
+    date: string;
 }
 
 export async function POST(req: Request) {
     try {
         const body: ActivityBody = await req.json();
-        const { location, startTime, endTime, tool } = body;
+        const { location, startTime, endTime, tool, region, date } = body;
 
-        if (!location || !startTime || !endTime) {
+        if (!location || !startTime || !endTime || !region || !date) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        if (!isValidDate(startTime) || !isValidDate(endTime)) {
+        if (!isValidDate(startTime) || !isValidDate(endTime) || !isValidDate(date)) {
             return NextResponse.json({ error: 'Invalid date format' }, { status: 400 });
         }
 
         const { data, error } = await supabase.from('activities').insert([
             {
+                region,
                 location,
                 start_time: new Date(startTime).toISOString(),
                 end_time: new Date(endTime).toISOString(),
+                date: new Date(date).toISOString().split('T')[0], // YYYY-MM-DD 형식으로 저장
                 tool,
             },
         ]);
