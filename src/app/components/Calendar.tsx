@@ -1,5 +1,3 @@
-'use client';
-
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import FullCalendar from '@fullcalendar/react';
@@ -17,6 +15,7 @@ interface Activity {
     end_time: string;
     participant_count: number;
     feedback?: string;
+    date: string;
 }
 
 // 지역별 색상 매핑
@@ -42,6 +41,7 @@ export default function CustomCalendar() {
                 const res = await fetch('/api/activities');
                 const data = await res.json();
                 setActivities(data.activities || []);
+                console.log(data.activities, '?activitiesactivities');
             } catch (err) {
                 console.error('활동 데이터를 불러오는데 실패했습니다:', err);
             } finally {
@@ -68,13 +68,6 @@ export default function CustomCalendar() {
 
     const handleEventClick = (arg: EventClickArg) => {
         router.push(`/activities/${arg.event.id}`);
-    };
-
-    const formatTime = (dateStr: string) => {
-        const date = new Date(dateStr);
-        const hours = date.getHours().toString().padStart(2, '0');
-        const minutes = date.getMinutes().toString().padStart(2, '0');
-        return `${hours}:${minutes}`;
     };
 
     if (isLoading) {
@@ -127,15 +120,13 @@ export default function CustomCalendar() {
                     };
 
                     const feedbackIndicator = activity.feedback ? '🟦' : '🟥';
-                    const time = formatTime(activity.start_time);
-
-                    const title = `${time} ${activity.region} ${activity.location} ${activity.tool} ${feedbackIndicator}`;
+                    const title = `${activity.start_time}  ${activity.region} ${activity.location} ${activity.tool} ${feedbackIndicator}`;
 
                     return {
                         id: activity.id,
                         title,
-                        start: activity.start_time,
-                        end: activity.end_time,
+                        start: activity.date, // ISO 8601 형식 그대로 사용
+                        end: activity.date, // ISO 8601 형식 그대로 사용
                         allDay: false,
                         backgroundColor: colors.backgroundColor,
                         borderColor: colors.borderColor,

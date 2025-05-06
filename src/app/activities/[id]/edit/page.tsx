@@ -50,8 +50,8 @@ export default function EditActivityClient() {
 
         const updated = {
             location: formData.get('location'),
-            start_time: `${date}T${startTime}`,
-            end_time: `${date}T${endTime}`,
+            start_time: startTime,
+            end_time: endTime,
             tool: formData.get('tool'),
             region: formData.get('region'),
             date,

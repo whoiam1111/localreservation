@@ -1,3 +1,5 @@
+'use client';
+
 import Calendar from './components/Calendar';
 import AddButton from './components/AddButton';
 

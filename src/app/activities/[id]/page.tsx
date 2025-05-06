@@ -100,8 +100,8 @@ export default function ActivityDetailClient() {
                 <section className="border-t pt-4">
                     <p className="text-lg font-semibold">⏰ 시간</p>
                     <div className="pl-4 text-gray-700 space-y-1">
-                        <p>시작: {new Date(activity.start_time).toLocaleString()}</p>
-                        <p>종료: {new Date(activity.end_time).toLocaleString()}</p>
+                        <p>시작: {activity.start_time}</p>
+                        <p>종료: {activity.end_time}</p>
                     </div>
                 </section>
 

@@ -15,6 +15,13 @@ interface ActivityBody {
     date: string;
 }
 
+const formatTimeToHHMM = (dateStr: string): string => {
+    const date = new Date(dateStr);
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+};
+
 export async function POST(req: Request) {
     try {
         const body: ActivityBody = await req.json();
@@ -28,12 +35,17 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Invalid date format' }, { status: 400 });
         }
 
+        // 시간 변환
+        const formattedStartTime = formatTimeToHHMM(startTime); // HH:MM 형식
+        const formattedEndTime = formatTimeToHHMM(endTime); // HH:MM 형식
+
+        // Supabase에 데이터 삽입
         const { data, error } = await supabase.from('activities').insert([
             {
                 region,
                 location,
-                start_time: new Date(startTime).toISOString(),
-                end_time: new Date(endTime).toISOString(),
+                start_time: formattedStartTime, // HH:MM 형식으로 저장
+                end_time: formattedEndTime, // HH:MM 형식으로 저장
                 date: new Date(date).toISOString().split('T')[0], // YYYY-MM-DD 형식으로 저장
                 tool,
             },
