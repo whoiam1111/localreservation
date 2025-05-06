@@ -6,6 +6,7 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction';
 import { EventClickArg, EventContentArg } from '@fullcalendar/core';
+import Loading from './Loading';
 
 interface Activity {
     id: string;
@@ -18,20 +19,22 @@ interface Activity {
     feedback?: string;
 }
 
-// 지역별 색상 매핑 (배경색, 테두리색, 글자색)
-const regionColors: Record<string, { backgroundColor: string; borderColor: string; textColor: string }> = {
-    도봉: { backgroundColor: '#bbdefb', borderColor: '#64b5f6', textColor: '#2196f3' }, // 파랑
-    성북: { backgroundColor: '#f8bbd0', borderColor: '#f48fb1', textColor: '#e91e63' }, // 분홍
-    노원: { backgroundColor: '#fff9c4', borderColor: '#fff176', textColor: '#fbc02d' }, // 노랑
-    중랑: { backgroundColor: '#c8e6c9', borderColor: '#81c784', textColor: '#4caf50' }, // 초록
-    강북: { backgroundColor: '#e1bee7', borderColor: '#ce93d8', textColor: '#9c27b0' }, // 보라
-    대학: { backgroundColor: '#ffe0b2', borderColor: '#ffcc80', textColor: '#ff9800' }, // 주황
-    새신자: { backgroundColor: '#b2dfdb', borderColor: '#80cbc4', textColor: '#009688' }, // 유지
+// 지역별 색상 매핑
+const regionColors: Record<string, { backgroundColor: string; borderColor: string }> = {
+    도봉: { backgroundColor: '#90caf9', borderColor: '#1e88e5' },
+    성북: { backgroundColor: '#f48fb1', borderColor: '#d81b60' },
+    노원: { backgroundColor: '#fff176', borderColor: '#fbc02d' },
+    중랑: { backgroundColor: '#a5d6a7', borderColor: '#388e3c' },
+    강북: { backgroundColor: '#ce93d8', borderColor: '#8e24aa' },
+    대학: { backgroundColor: '#ffb74d', borderColor: '#ef6c00' },
+    새신자: { backgroundColor: '#80cbc4', borderColor: '#00897b' },
 };
 
 export default function CustomCalendar() {
     const [activities, setActivities] = useState<Activity[]>([]);
+    const [isLoading, setIsLoading] = useState(true); // 로딩 상태 추가
     const router = useRouter();
+    const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
         const fetchActivities = async () => {
@@ -41,9 +44,22 @@ export default function CustomCalendar() {
                 setActivities(data.activities || []);
             } catch (err) {
                 console.error('활동 데이터를 불러오는데 실패했습니다:', err);
+            } finally {
+                setIsLoading(false); // 로딩 완료 후 상태 변경
             }
         };
         fetchActivities();
+
+        const handleResize = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+
+        window.addEventListener('resize', handleResize);
+        handleResize();
+
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        };
     }, []);
 
     const handleDateClick = (arg: DateClickArg) => {
@@ -61,9 +77,12 @@ export default function CustomCalendar() {
         return `${hours}:${minutes}`;
     };
 
+    if (isLoading) {
+        return <Loading />; // Use the Loading component when loading
+    }
+
     return (
         <div className="calendar-container">
-            {/* FullCalendar 스타일 커스터마이징 */}
             <style jsx global>{`
                 .fc .fc-daygrid-event {
                     white-space: normal !important;
@@ -71,15 +90,28 @@ export default function CustomCalendar() {
                     word-break: break-word;
                     font-weight: bold;
                 }
+
+                /* 모바일에서 캘린더 스타일 조정 */
+                @media (max-width: 768px) {
+                    .fc .fc-daygrid-event {
+                        font-size: 0.75rem;
+                        padding: 2px 4px;
+                        border-radius: 4px;
+                    }
+                    .fc .fc-daygrid-day {
+                        height: 80px !important; /* 높이를 줄여서 일정 항목을 보기 쉽게 */
+                    }
+                }
             `}</style>
 
             <FullCalendar
+                height="auto"
                 plugins={[dayGridPlugin, interactionPlugin]}
-                initialView="dayGridWeek"
+                initialView={isMobile ? 'dayGridDay' : 'dayGridWeek'}
                 headerToolbar={{
                     left: 'prev,next today',
                     center: 'title',
-                    right: 'dayGridWeek,dayGridMonth',
+                    right: isMobile ? 'dayGridDay,dayGridWeek,dayGridMonth' : 'dayGridWeek,dayGridMonth',
                 }}
                 buttonText={{
                     today: '오늘',
@@ -92,11 +124,11 @@ export default function CustomCalendar() {
                     const colors = regionColors[activity.region] || {
                         backgroundColor: '#e0e0e0',
                         borderColor: '#9e9e9e',
-                        textColor: '#000000',
                     };
 
                     const feedbackIndicator = activity.feedback ? '🟦' : '🟥';
                     const time = formatTime(activity.start_time);
+
                     const title = `${time} ${activity.region} ${activity.location} ${activity.tool} ${feedbackIndicator}`;
 
                     return {
@@ -107,14 +139,26 @@ export default function CustomCalendar() {
                         allDay: false,
                         backgroundColor: colors.backgroundColor,
                         borderColor: colors.borderColor,
-                        extendedProps: {
-                            textColor: colors.textColor,
-                        },
                     };
                 })}
                 eventContent={(eventInfo: EventContentArg) => {
-                    const textColor = eventInfo.event.extendedProps.textColor || '#000';
-                    return <div style={{ color: textColor }}>{eventInfo.event.title}</div>;
+                    return (
+                        <div
+                            style={{
+                                backgroundColor: eventInfo.backgroundColor || '#e0e0e0',
+                                padding: '4px 6px',
+                                borderRadius: '6px',
+                                color: '#000',
+                                fontWeight: 'bold',
+                                fontSize: '0.85rem',
+                                lineHeight: '1.2',
+                                whiteSpace: 'normal',
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                            }}
+                        >
+                            {eventInfo.event.title}
+                        </div>
+                    );
                 }}
             />
         </div>

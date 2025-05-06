@@ -9,3 +9,41 @@
     color: white;
     border-radius: 9999px;
 }
+/* 기본 버튼 스타일 */
+.fc .fc-button {
+    padding: 6px 12px;
+    font-size: 14px;
+    border-radius: 6px;
+}
+
+/* 제목 스타일 */
+.fc .fc-toolbar-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+}
+
+/* 모바일 대응 스타일 */
+@media (max-width: 768px) {
+    .fc .fc-toolbar-title {
+        font-size: 1.1rem;
+        text-align: center;
+    }
+
+    .fc .fc-toolbar {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .fc .fc-button {
+        font-size: 12px;
+        padding: 4px 8px;
+    }
+
+    .fc .fc-toolbar-chunk {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+}

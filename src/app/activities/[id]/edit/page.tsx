@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/app/lib/supabase';
+import Loading from '@/app/components/Loading';
 
 type Activity = {
     id: string;
@@ -22,6 +23,7 @@ export default function EditActivityClient() {
     const router = useRouter();
     const params = useParams();
     const activityId = params?.id as string;
+
     useEffect(() => {
         const fetchActivity = async () => {
             const { data, error } = await supabase.from('activities').select('*').eq('id', activityId).single();
@@ -38,7 +40,7 @@ export default function EditActivityClient() {
     }, [activityId, router]);
 
     if (!activity) {
-        return <p>Loading...</p>;
+        return <Loading />;
     }
 
     const handleSubmit = async (formData: FormData) => {
@@ -66,80 +68,95 @@ export default function EditActivityClient() {
     };
 
     return (
-        <form
-            onSubmit={(e) => {
-                e.preventDefault();
-                const formData = new FormData(e.target as HTMLFormElement);
-                handleSubmit(formData);
-            }}
-            className="p-4 space-y-4 bg-white min-h-screen"
-        >
-            <h1 className="text-xl font-bold mb-4">활동 수정</h1>
+        <main className="max-w-md mx-auto px-4 py-8">
+            <form
+                onSubmit={(e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.target as HTMLFormElement);
+                    handleSubmit(formData);
+                }}
+                className="space-y-6 bg-white p-6 rounded-2xl shadow-md"
+            >
+                <h1 className="text-2xl font-bold text-center mb-6">✏️ 활동 수정</h1>
 
-            <label className="block">
-                날짜
-                <input
-                    name="date"
-                    type="date"
-                    defaultValue={activity.date}
-                    className="w-full border p-2 rounded"
-                    required
-                />
-            </label>
-
-            <label className="block">
-                장소
-                <input
-                    name="location"
-                    defaultValue={activity.location}
-                    className="w-full border p-2 rounded"
-                    required
-                />
-            </label>
-
-            <div className="flex gap-2">
-                <label className="flex-1">
-                    시작 시간
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">날짜</label>
                     <input
-                        name="startTime"
-                        type="time"
-                        defaultValue={activity.start_time.slice(11, 16)}
-                        className="w-full border p-2 rounded"
+                        name="date"
+                        type="date"
+                        defaultValue={activity.date}
+                        className="w-full p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
                         required
                     />
-                </label>
+                </div>
 
-                <label className="flex-1">
-                    종료 시간
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">장소</label>
                     <input
-                        name="endTime"
-                        type="time"
-                        defaultValue={activity.end_time.slice(11, 16)}
-                        className="w-full border p-2 rounded"
+                        name="location"
+                        defaultValue={activity.location}
+                        className="w-full p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
                         required
                     />
-                </label>
-            </div>
+                </div>
 
-            <label className="block">
-                도구
-                <input name="tool" defaultValue={activity.tool} className="w-full border p-2 rounded" required />
-            </label>
+                <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">시작 시간</label>
+                        <input
+                            name="startTime"
+                            type="time"
+                            defaultValue={activity.start_time.slice(11, 16)}
+                            className="w-full p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            required
+                        />
+                    </div>
 
-            <label className="block">
-                지역
-                <select name="region" defaultValue={activity.region} className="w-full border p-2 rounded" required>
-                    {REGION_OPTIONS.map((region) => (
-                        <option key={region} value={region}>
-                            {region}
-                        </option>
-                    ))}
-                </select>
-            </label>
+                    <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">종료 시간</label>
+                        <input
+                            name="endTime"
+                            type="time"
+                            defaultValue={activity.end_time.slice(11, 16)}
+                            className="w-full p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            required
+                        />
+                    </div>
+                </div>
 
-            <button type="submit" className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">
-                저장하기
-            </button>
-        </form>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">도구</label>
+                    <input
+                        name="tool"
+                        defaultValue={activity.tool}
+                        className="w-full p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        required
+                    />
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">지역</label>
+                    <select
+                        name="region"
+                        defaultValue={activity.region}
+                        className="w-full p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        required
+                    >
+                        {REGION_OPTIONS.map((region) => (
+                            <option key={region} value={region}>
+                                {region}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                <button
+                    type="submit"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl text-lg font-semibold transition duration-200"
+                >
+                    저장하기
+                </button>
+            </form>
+        </main>
     );
 }
