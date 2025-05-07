@@ -1,18 +1,24 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Plus } from 'lucide-react';
 
-export default function AddButton() {
+interface AddButtonProps {
+    label?: string;
+    icon?: React.ReactNode;
+    href: string;
+    className?: string;
+}
+
+export default function AddButton({ label, icon, href }: AddButtonProps) {
     const router = useRouter();
 
     return (
         <button
-            onClick={() => router.push('/add')}
-            className="flex items-center justify-center gap-2 w-full sm:w-fit px-5 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white text-base sm:text-lg font-medium rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
+            onClick={() => router.push(href)}
+            className={`flex items-center justify-center gap-2 w-full sm:w-fit px-2 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white text-base sm:text-xs rounded-xl shadow-md hover:shadow-lg transition-all duration-200 mt-2 `}
         >
-            <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
-            <span>일정 추가</span>
+            {icon}
+            <span>{label}</span>
         </button>
     );
 }
