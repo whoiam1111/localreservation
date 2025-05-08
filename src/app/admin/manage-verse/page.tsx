@@ -2,12 +2,17 @@
 
 import { supabase } from '@/app/lib/supabase';
 import { useState } from 'react';
-
+type BibleSearchResult = {
+    verse_text: string;
+    book_name: string;
+    chapter_number: number;
+    verse_number: number;
+};
 export default function ManageBibleVerses() {
     const [bibleVerses, setBibleVerses] = useState<string[]>([]);
     const [newVerse, setNewVerse] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
-    const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [searchResults, setSearchResults] = useState<BibleSearchResult[]>([]);
 
     const handleAddVerse = async () => {
         if (newVerse.trim()) {
