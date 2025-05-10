@@ -24,8 +24,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 } md:translate-x-0`}
             >
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold">관리자 대시보드</h2>
-                    <X className="md:hidden text-white cursor-pointer" onClick={() => setIsSidebarOpen(false)} />
+                    <h2
+                        onClick={() => {
+                            router.push('/');
+                        }}
+                        className="text-xl font-bold"
+                    >
+                        홈
+                    </h2>
+                    <X
+                        className="md:hidden text-white cursor-pointer"
+                        onClick={() => setIsSidebarOpen(false)}
+                    />
                 </div>
                 <nav>
                     <ul className="space-y-2">

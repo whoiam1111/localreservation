@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import Loading from '@/app/components/Loading';
+
 interface Activity {
     id: string;
     location: string;
@@ -19,7 +20,8 @@ interface Activity {
 
 export default function ActivityDetailClient() {
     const [activity, setActivity] = useState<Activity | null>(null);
-    const [result, setResult] = useState('');
+    const [result, setResult] = useState([{ name: '', phone: '', lead: '', type: '', team: '' }]);
+
     const [feedback, setFeedback] = useState('');
     const [participantCount, setParticipantCount] = useState(0);
     const [loading, setLoading] = useState(true);
@@ -37,7 +39,9 @@ export default function ActivityDetailClient() {
                 const json = await res.json();
                 const act = json.activity;
                 setActivity(act);
-                setResult(act.result || '');
+
+                console.log(act, 'act');
+                setResult(act.result || [{ name: '', phone: '', lead: '', type: '', team: '' }]);
                 setFeedback(act.feedback || '');
                 setParticipantCount(act.participant_count || 0);
             } catch (err) {
@@ -52,16 +56,42 @@ export default function ActivityDetailClient() {
     }, [activityId]);
 
     const handleUpdate = async () => {
+        if (!activity) {
+            alert('활동 정보가 없습니다.');
+            return;
+        }
+
         try {
             const res = await fetch(`/api/activities/${activityId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ result, feedback, participant_count: participantCount }),
             });
+
             if (!res.ok) throw new Error('업데이트 실패');
             const updated = await res.json();
             setActivity(updated.activity);
             router.refresh();
+
+            for (const p of result) {
+                if (p.name && p.phone) {
+                    await fetch('/api/spreadsheet', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name: p.name,
+                            phone_suffix: p.phone,
+                            lead: p.lead || '',
+                            type: p.type || '',
+                            team: p.team || '',
+                            region: activity.region,
+                            location: updated.activity.location,
+                            date: new Date(updated.activity.created_at).toLocaleDateString(),
+                        }),
+                    });
+                }
+            }
+
             alert('업데이트 완료!');
         } catch (err) {
             console.error('업데이트 오류:', err);
@@ -80,7 +110,7 @@ export default function ActivityDetailClient() {
         }
     };
 
-    if (loading) return <Loading />; // 로딩 중에 Loading 컴포넌트 표시
+    if (loading) return <Loading />;
     if (!activity) return <p className="text-center py-10 text-red-500">활동 정보를 찾을 수 없습니다.</p>;
 
     return (
@@ -135,16 +165,100 @@ export default function ActivityDetailClient() {
                         placeholder="숫자를 입력하세요"
                     />
                 </section>
-
                 <section className="border-t pt-4">
-                    <label className="block font-semibold mb-1">📊 결과</label>
-                    <textarea
-                        value={result}
-                        onChange={(e) => setResult(e.target.value)}
-                        className="w-full max-w-md border rounded-xl p-3 mt-1 bg-white shadow-inner"
-                        rows={3}
-                        placeholder="결과 내용을 입력하세요"
-                    />
+                    <div className="flex justify-between items-center mb-2">
+                        <label className="block font-semibold">📊 결과</label>
+                        <button
+                            onClick={() =>
+                                setResult([...result, { name: '', lead: '', phone: '', type: '', team: '' }])
+                            }
+                            className="text-sm text-blue-600 hover:underline"
+                        >
+                            + 추가
+                        </button>
+                    </div>
+
+                    {result.map((p, idx) => (
+                        <div
+                            key={idx}
+                            className="flex flex-col sm:flex-row sm:gap-4 gap-2 items-start sm:items-center mb-4"
+                        >
+                            <input
+                                type="text"
+                                value={p.name}
+                                onChange={(e) => {
+                                    const updated = [...result];
+                                    updated[idx].name = e.target.value;
+                                    setResult(updated);
+                                }}
+                                className="w-full sm:w-32 border rounded-xl p-2 bg-white shadow-inner"
+                                placeholder="이름"
+                            />
+                            <select
+                                value={p.team}
+                                onChange={(e) => {
+                                    const updated = [...result];
+                                    updated[idx].team = e.target.value;
+                                    setResult(updated);
+                                }}
+                                className="w-full sm:w-36 border rounded-xl p-2 bg-white shadow-inner"
+                            >
+                                <option value="">선택</option>
+                                <option value="1팀">1팀</option>
+                                <option value="2팀">2팀</option>
+                                <option value="3팀">3팀</option>
+                                <option value="4팀">4팀</option>
+                            </select>
+                            <input
+                                type="text"
+                                value={p.lead}
+                                onChange={(e) => {
+                                    const updated = [...result];
+                                    updated[idx].lead = e.target.value;
+                                    setResult(updated);
+                                }}
+                                className="w-full sm:w-32 border rounded-xl p-2 bg-white shadow-inner"
+                                placeholder="인도자"
+                            />
+                            <input
+                                type="text"
+                                value={p.phone}
+                                onChange={(e) => {
+                                    const updated = [...result];
+                                    updated[idx].phone = e.target.value;
+                                    setResult(updated);
+                                }}
+                                className="w-full sm:w-24 border rounded-xl p-2 bg-white shadow-inner"
+                                placeholder="뒷자리"
+                                maxLength={4}
+                            />
+                            <select
+                                value={p.type}
+                                onChange={(e) => {
+                                    const updated = [...result];
+                                    updated[idx].type = e.target.value;
+                                    setResult(updated);
+                                }}
+                                className="w-full sm:w-36 border rounded-xl p-2 bg-white shadow-inner"
+                            >
+                                <option value="">선택</option>
+                                <option value="인터뷰확정">인터뷰확정</option>
+                                <option value="상담확정">상담확정</option>
+                                <option value="연락처확보">연락처확보</option>
+                                <option value="공격스피치">공격스피치</option>
+                            </select>
+                            <button
+                                onClick={() => {
+                                    const updated = [...result];
+                                    updated.splice(idx, 1);
+                                    setResult(updated);
+                                }}
+                                className="text-red-500 hover:text-red-700 text-sm mt-1 sm:mt-0"
+                            >
+                                삭제
+                            </button>
+                        </div>
+                    ))}
                 </section>
 
                 <section>
@@ -175,6 +289,7 @@ export default function ActivityDetailClient() {
                     🗑️ 삭제하기
                 </button>
             </div>
+
             <div className="mt-4 text-center">
                 <Link
                     href="/"
@@ -183,8 +298,12 @@ export default function ActivityDetailClient() {
                     🏠 홈으로
                 </Link>
             </div>
+
             <div className="mt-8 text-center">
-                <Link href={`/activities/${activityId}/edit`} className="text-blue-600 hover:underline text-base">
+                <Link
+                    href={`/activities/${activityId}/edit`}
+                    className="text-blue-600 hover:underline text-base"
+                >
                     활동 수정 페이지로 이동
                 </Link>
             </div>
