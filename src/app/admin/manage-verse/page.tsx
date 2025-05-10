@@ -63,7 +63,7 @@ export default function ManageBibleVerses() {
             console.error(error);
         } else {
             alert(`"${book_name} ${chapter_number}" 성구가 ${selectedDate} 날짜로 등록되었습니다!`);
-            fetchTodayBibleVerses();  // 성구가 등록된 후 리스트를 새로 고침
+            fetchTodayBibleVerses(); // 성구가 등록된 후 리스트를 새로 고침
         }
     };
 
@@ -72,7 +72,7 @@ export default function ManageBibleVerses() {
         const { data, error } = await supabase
             .from('today_bible_verses')
             .select('*')
-            .order('date_used', { ascending: false });  // 날짜 내림차순 정렬 (가장 최근 날짜가 위로)
+            .order('date_used', { ascending: false }); // 날짜 내림차순 정렬 (가장 최근 날짜가 위로)
 
         if (error) {
             console.error('오늘의 성구 불러오기 실패:', error);
@@ -90,7 +90,7 @@ export default function ManageBibleVerses() {
             console.error(error);
         } else {
             alert('오늘의 성구가 삭제되었습니다.');
-            fetchTodayBibleVerses();  // 삭제 후 리스트 새로 고침
+            fetchTodayBibleVerses(); // 삭제 후 리스트 새로 고침
         }
     };
 
@@ -152,9 +152,12 @@ export default function ManageBibleVerses() {
                                     <p className="font-medium text-gray-800">
                                         {result.book_name} {result.chapter_number}:{result.verse_number}
                                     </p>
-                                    <p className="text-gray-600" dangerouslySetInnerHTML={{
-                                        __html: highlightText(result.verse_text, searchQuery)
-                                    }} />
+                                    <p
+                                        className="text-gray-600"
+                                        dangerouslySetInnerHTML={{
+                                            __html: highlightText(result.verse_text, searchQuery),
+                                        }}
+                                    />
                                 </div>
                             ))}
                         </div>
@@ -167,12 +170,17 @@ export default function ManageBibleVerses() {
                 {todayBibleVerses.length > 0 ? (
                     <ul className="space-y-4">
                         {todayBibleVerses.map((verse) => (
-                            <li key={verse.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg shadow-md">
+                            <li
+                                key={verse.id}
+                                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg shadow-md"
+                            >
                                 <div>
                                     <p className="font-semibold text-gray-800">
                                         {verse.book_name} {verse.chapter_number}: {verse.verses}
                                     </p>
-                                    <span className="text-sm text-gray-500">{new Date(verse.date_used).toLocaleDateString()}</span>
+                                    <span className="text-sm text-gray-500">
+                                        {new Date(verse.date_used).toLocaleDateString()}
+                                    </span>
                                 </div>
                                 <button
                                     onClick={() => handleDeleteVerse(verse.id)}

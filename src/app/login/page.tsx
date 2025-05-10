@@ -15,22 +15,24 @@ export default function LoginPage() {
     useEffect(() => {
         supabase.auth.getSession().then(({ data }) => {
             if (data.session) {
-                router.replace('/');
+                router.replace('/admin');
             }
         });
-    }, [router, supabase]);
+    }, [supabase, router]);
 
     const handleLogin = async (e: FormEvent) => {
         e.preventDefault();
-        const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
+        const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
         });
 
-        if (error) {
-            setError(error.message);
+        if (!response.ok) {
+            const { error } = await response.json();
+            setError(error || '로그인 실패');
         } else {
-            router.replace('/');
+            router.replace('/admin');
         }
     };
 

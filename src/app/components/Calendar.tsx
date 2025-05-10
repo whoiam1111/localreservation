@@ -18,7 +18,6 @@ interface Activity {
     date: string;
 }
 
-// 지역별 색상 매핑
 const regionColors: Record<string, { backgroundColor: string; borderColor: string }> = {
     도봉: { backgroundColor: '#90caf9', borderColor: '#1e88e5' },
     성북: { backgroundColor: '#f48fb1', borderColor: '#d81b60' },
@@ -41,11 +40,10 @@ export default function CustomCalendar() {
                 const res = await fetch('/api/activities');
                 const data = await res.json();
                 setActivities(data.activities || []);
-                console.log(data.activities, '?activitiesactivities');
             } catch (err) {
                 console.error('활동 데이터를 불러오는데 실패했습니다:', err);
             } finally {
-                setIsLoading(false); // 로딩 완료 후 상태 변경
+                setIsLoading(false);
             }
         };
         fetchActivities();
@@ -71,11 +69,11 @@ export default function CustomCalendar() {
     };
 
     if (isLoading) {
-        return <Loading />; // Use the Loading component when loading
+        return <Loading />;
     }
 
     return (
-        <div className="calendar-container">
+        <div className="calendar-container mt-2">
             <style jsx global>{`
                 .fc .fc-daygrid-event {
                     white-space: normal !important;
@@ -90,6 +88,10 @@ export default function CustomCalendar() {
                         font-size: 0.75rem;
                         padding: 2px 4px;
                         border-radius: 4px;
+                    }
+                    .fc .fc-header-toolbar {
+                        display: flex;
+                        flex-direction: unset;
                     }
                     .fc .fc-daygrid-day {
                         height: 80px !important; /* 높이를 줄여서 일정 항목을 보기 쉽게 */
