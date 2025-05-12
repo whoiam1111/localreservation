@@ -4,22 +4,13 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/app/lib/supabase';
 import Loading from '@/app/components/Loading';
-
-type Activity = {
-    id: string;
-    region: string;
-    location: string;
-    start_time: string;
-    participant_count: number;
-    end_time: string;
-    tool: string;
-    date: string;
-};
-
-const REGION_OPTIONS = ['도봉', '성북', '노원', '중랑', '강북', '대학', '새신자'];
+import { REGION_OPTIONS } from '@/app/lib/constants';
 
 export default function EditActivityClient() {
     const [activity, setActivity] = useState<Activity | null>(null);
+    const [isHostUnspecified, setIsHostUnspecified] = useState(true); // "미정" 체크 여부
+    const [host, setHost] = useState('');
+    const [hostNumber, setHostNumber] = useState('');
     const router = useRouter();
     const params = useParams();
     const activityId = params?.id as string;
@@ -33,6 +24,9 @@ export default function EditActivityClient() {
                 router.push('/404');
             } else {
                 setActivity(data);
+                setIsHostUnspecified(data.host === '미정'); // 기존 주관자가 '미정'이면 체크박스 체크
+                setHost(data.host !== '미정' ? data.host : ''); // 주관자 이름 설정
+                setHostNumber(data.hostnumber || ''); // 주관자 연락처 설정
             }
         };
 
@@ -55,6 +49,8 @@ export default function EditActivityClient() {
             tool: formData.get('tool'),
             region: formData.get('region'),
             date,
+            host: isHostUnspecified ? '미정' : host, // 주관자 값 설정
+            hostnumber: hostNumber, // 주관자 연락처
         };
 
         const { error } = await supabase.from('activities').update(updated).eq('id', activityId);
@@ -106,7 +102,7 @@ export default function EditActivityClient() {
                         <input
                             name="startTime"
                             type="time"
-                            defaultValue={activity.start_time.slice(11, 16)}
+                            defaultValue={activity.start_time}
                             className="w-full p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
                             required
                         />
@@ -117,7 +113,7 @@ export default function EditActivityClient() {
                         <input
                             name="endTime"
                             type="time"
-                            defaultValue={activity.end_time.slice(11, 16)}
+                            defaultValue={activity.end_time}
                             className="w-full p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
                             required
                         />
@@ -150,11 +146,55 @@ export default function EditActivityClient() {
                     </select>
                 </div>
 
+                {/* 주관자 미정 체크박스 */}
+                <div className="flex items-center gap-2">
+                    <input
+                        type="checkbox"
+                        checked={isHostUnspecified}
+                        onChange={(e) => setIsHostUnspecified(e.target.checked)}
+                        className="w-4 h-4"
+                    />
+                    <label className="text-sm font-medium text-gray-700">주관자 미정</label>
+                </div>
+
+                {/* 주관자 이름 입력 필드 (미정이 아닐 경우) */}
+                {!isHostUnspecified && (
+                    <>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">주관자</label>
+                            <input
+                                name="host"
+                                value={host}
+                                onChange={(e) => setHost(e.target.value)}
+                                className="w-full p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">주관자 연락처</label>
+                            <input
+                                name="hostNumber"
+                                value={hostNumber}
+                                onChange={(e) => setHostNumber(e.target.value)}
+                                className="w-full p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                required
+                            />
+                        </div>
+                    </>
+                )}
+
                 <button
                     type="submit"
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl text-lg font-semibold transition duration-200"
                 >
                     저장하기
+                </button>
+                <button
+                    type="button"
+                    onClick={() => router.back()}
+                    className="w-full bg-gray-300 hover:bg-gray-400 text-black py-3 rounded-xl text-lg font-semibold transition duration-200 mb-6"
+                >
+                    돌아가기
                 </button>
             </form>
         </main>

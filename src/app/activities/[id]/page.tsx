@@ -4,34 +4,19 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import Loading from '@/app/components/Loading';
-
-interface Activity {
-    id: string;
-    location: string;
-    start_time: string;
-    end_time: string;
-    tool: string;
-    result?: string;
-    feedback?: string;
-    created_at: string;
-    region: string;
-    participant_count: number;
-}
+import { FaSave, FaTrash, FaArrowLeft, FaTruckLoading, FaEdit } from 'react-icons/fa';
 
 export default function ActivityDetailClient() {
     const [activity, setActivity] = useState<Activity | null>(null);
-    const [result, setResult] = useState([{ name: '', phone: '', lead: '', type: '', team: '' }]);
-    const [feedback, setFeedback] = useState({
-        strengths: '', // 잘한점
-        improvements: '', // 보완할점
-        futurePlans: '', // 다음번 적용 계획
-    });
-
+    const [result, setResult] = useState<Participant[]>([{ name: '', phone: '', lead: '', type: '', team: '' }]);
+    const [feedback, setFeedback] = useState<Feedback>({ strengths: '', improvements: '', futurePlans: '' });
     const [participantCount, setParticipantCount] = useState(0);
     const [loading, setLoading] = useState(true);
     const [isUpdating, setIsUpdating] = useState(false);
     const router = useRouter();
     const { id: activityId } = useParams() as { id: string };
+
+    const [canEdit, setCanEdit] = useState(false);
 
     useEffect(() => {
         if (!activityId) return;
@@ -44,8 +29,13 @@ export default function ActivityDetailClient() {
                 const act = json.activity;
                 setActivity(act);
                 setResult(act.result || [{ name: '', phone: '', lead: '', type: '', team: '' }]);
-                setFeedback(act.feedback || '');
+                setFeedback(act.feedback ? act.feedback : { strengths: '', improvements: '', futurePlans: '' });
                 setParticipantCount(act.participant_count || 0);
+
+                const startTime = new Date(act.start_time).getTime();
+                const currentTime = Date.now();
+                const threeHoursBeforeStart = startTime - 3 * 60 * 60 * 1000;
+                setCanEdit(currentTime < threeHoursBeforeStart);
             } catch (err) {
                 console.error('활동 정보 조회 오류:', err);
                 alert('활동 정보를 불러오지 못했습니다.');
@@ -63,19 +53,17 @@ export default function ActivityDetailClient() {
             return;
         }
 
-        setIsUpdating(true); // 시작 시 상태 true
-
-        const feedbackText = `
-            잘한 점: ${feedback.strengths}
-            보완할 점: ${feedback.improvements}
-            다음번 적용 계획: ${feedback.futurePlans}
-        `;
+        setIsUpdating(true);
 
         try {
             const res = await fetch(`/api/activities/${activityId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ result, feedback: feedbackText, participant_count: participantCount }),
+                body: JSON.stringify({
+                    result,
+                    feedback,
+                    participant_count: participantCount,
+                }),
             });
 
             if (!res.ok) throw new Error('업데이트 실패');
@@ -107,7 +95,7 @@ export default function ActivityDetailClient() {
             console.error('업데이트 오류:', err);
             alert('업데이트 실패');
         } finally {
-            setIsUpdating(false); // 끝나면 false
+            setIsUpdating(false);
         }
     };
 
@@ -126,45 +114,54 @@ export default function ActivityDetailClient() {
     if (!activity) return <p className="text-center py-10 text-red-500 text-sm">활동 정보를 찾을 수 없습니다.</p>;
 
     return (
-        <main className="max-w-3xl mx-auto px-4 py-8 bg-gray-50 min-h-screen">
-            <h1 className="text-xl font-bold text-center mb-6 text-gray-800">📋 활동 상세보기</h1>
+        <main className="max-w-4xl mx-auto px-6 py-10 bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen">
+            <h1 className="text-3xl font-bold text-center mb-8 text-gray-800 flex items-center justify-center gap-2">
+                <span>📋</span> 활동 상세
+            </h1>
 
-            <div className="bg-white rounded-2xl shadow-md p-4 space-y-4">
-                <section>
-                    <p className="text-sm">
-                        <span className="font-semibold">📍 장소:</span> {activity.location}
-                    </p>
-                    <p className="text-sm">
-                        <span className="font-semibold">🌐 지역:</span> {activity.region}
-                    </p>
-                </section>
-
-                <section className="border-t pt-4">
-                    <p className="text-sm font-semibold">⏰ 시간</p>
-                    <div className="pl-3 flex text-gray-700 space-y-1">
-                        <p className="mr-4">시작: {activity.start_time}</p>
-                        <p>종료: {activity.end_time}</p>
+            <div className="bg-white rounded-3xl shadow-xl p-8 space-y-6">
+                <section className="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-6">
+                    <div>
+                        <p className="text-sm text-gray-600">
+                            <span className="font-semibold">📍 장소:</span> {activity.location}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                            <span className="font-semibold">🌐 지역:</span> {activity.region}
+                        </p>
+                    </div>
+                    <div>
+                        <p className="text-sm text-gray-600">
+                            <span className="font-semibold">🛠️ 도구:</span> {activity.tool}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                            <span className="font-semibold">📅 작성일:</span>{' '}
+                            <span className="text-blue-600">
+                                {new Date(activity.created_at).toLocaleDateString()} (
+                                {new Date(activity.created_at).toLocaleTimeString()})
+                            </span>
+                        </p>
                     </div>
                 </section>
 
-                <section className="border-t pt-4">
-                    <p className="text-sm">
-                        <span className="font-semibold">🛠️ 도구:</span> {activity.tool}
+                <section className="border-t pt-6">
+                    <p className="text-sm font-semibold text-gray-700">⏰ 시간</p>
+                    <div className="flex flex-wrap gap-8 mt-2 text-sm text-gray-600">
+                        <p>시작: {activity.start_time}</p>
+                        <p>종료: {activity.end_time}</p>
+                    </div>
+                </section>
+                <section className="border-t pt-6">
+                    <p className="text-sm text-gray-600">
+                        <span className="font-semibold">주관자:</span> {activity.host}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                        <span className="font-semibold">주관자 연락처:</span> {activity.hostnumber}
                     </p>
                 </section>
 
-                <section className="border-t pt-4">
-                    <p className="text-sm">
-                        <span className="font-semibold">📅 작성일:</span>{' '}
-                        <span className="text-blue-600 font-medium">
-                            {new Date(activity.created_at).toLocaleDateString()} (
-                            {new Date(activity.created_at).toLocaleTimeString()})
-                        </span>
-                    </p>
-                </section>
-
-                <section className="border-t pt-4">
-                    <label className="block text-sm font-semibold mb-1">👥 참여 인원 수</label>
+                {/* Participant Count */}
+                <section className="border-t pt-6">
+                    <label className="block text-sm font-semibold text-gray-700">👥 참여 인원 수</label>
                     <input
                         type="number"
                         min={0}
@@ -173,35 +170,33 @@ export default function ActivityDetailClient() {
                             const value = parseInt(e.target.value, 10);
                             if (!isNaN(value)) setParticipantCount(value);
                         }}
-                        className="w-full max-w-md border rounded-xl p-2 mt-1 bg-white shadow-inner text-sm"
+                        className="w-full max-w-xs border rounded-lg p-4 mt-1 bg-gray-50 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-sm"
                         placeholder="숫자를 입력하세요"
                     />
                 </section>
 
-                <section className="border-t pt-4">
-                    <div className="flex justify-between items-center mb-2">
-                        <label className="block text-sm font-semibold">
-                            📊 결과 입력 <span className="text-gray-500 text-xs">(총 {result.length}건)</span>
+                {/* Result Input */}
+                <section className="border-t pt-6">
+                    <div className="flex justify-between items-center mb-4">
+                        <label className="text-sm font-semibold text-gray-700">
+                            📊 결과 입력 <span className="text-gray-400 text-xs">({result.length}건)</span>
                         </label>
                         <button
                             onClick={() =>
                                 setResult([...result, { name: '', lead: '', phone: '', type: '', team: '' }])
                             }
-                            className="text-xs text-blue-600 hover:underline"
+                            className="text-xs text-blue-600 hover:text-blue-800 font-medium"
                         >
                             + 참여자 추가
                         </button>
                     </div>
 
-                    <div className="space-y-3">
+                    <div className="space-y-6">
                         {result.map((p, idx) => (
-                            <div
-                                key={idx}
-                                className="border-t pt-3"
-                            >
-                                <div className="grid grid-cols-2 gap-3">
+                            <div key={idx} className="border rounded-lg p-6 bg-gray-50 shadow-md">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                     <div>
-                                        <label className="block text-xs font-semibold">이름</label>
+                                        <label className="block text-xs font-semibold text-gray-600">이름</label>
                                         <input
                                             type="text"
                                             value={p.name}
@@ -210,12 +205,12 @@ export default function ActivityDetailClient() {
                                                 updated[idx].name = e.target.value;
                                                 setResult(updated);
                                             }}
-                                            className="w-full border rounded p-2 text-sm"
+                                            className="w-full border rounded-lg p-4 text-sm bg-white focus:ring-2 focus:ring-blue-400"
                                             placeholder="이름"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-semibold">팀</label>
+                                        <label className="block text-xs font-semibold text-gray-600">팀</label>
                                         <select
                                             value={p.team}
                                             onChange={(e) => {
@@ -223,7 +218,7 @@ export default function ActivityDetailClient() {
                                                 updated[idx].team = e.target.value;
                                                 setResult(updated);
                                             }}
-                                            className="w-full border rounded p-2 text-sm"
+                                            className="w-full border rounded-lg p-4 text-sm bg-white focus:ring-2 focus:ring-blue-400"
                                         >
                                             <option value="">선택</option>
                                             <option value="1팀">1팀</option>
@@ -234,9 +229,9 @@ export default function ActivityDetailClient() {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-3 mt-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
                                     <div>
-                                        <label className="block text-xs font-semibold">인도자</label>
+                                        <label className="block text-xs font-semibold text-gray-600">인도자</label>
                                         <input
                                             type="text"
                                             value={p.lead}
@@ -245,12 +240,12 @@ export default function ActivityDetailClient() {
                                                 updated[idx].lead = e.target.value;
                                                 setResult(updated);
                                             }}
-                                            className="w-full border rounded p-2 text-sm"
+                                            className="w-full border rounded-lg p-4 text-sm bg-white focus:ring-2 focus:ring-blue-400"
                                             placeholder="인도자"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-semibold">전화 뒷자리</label>
+                                        <label className="block text-xs font-semibold text-gray-600">전화 뒷자리</label>
                                         <input
                                             type="text"
                                             value={p.phone}
@@ -260,114 +255,110 @@ export default function ActivityDetailClient() {
                                                 setResult(updated);
                                             }}
                                             maxLength={4}
-                                            className="w-full border rounded p-2 text-sm"
+                                            className="w-full border rounded-lg p-4 text-sm bg-white focus:ring-2 focus:ring-blue-400"
                                             placeholder="뒷자리"
                                         />
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-3 mt-3">
-                                    <div>
-                                        <label className="block text-xs font-semibold">유형</label>
-                                        <select
-                                            value={p.type}
-                                            onChange={(e) => {
-                                                const updated = [...result];
-                                                updated[idx].type = e.target.value;
-                                                setResult(updated);
-                                            }}
-                                            className="w-full border rounded p-2 text-sm"
-                                        >
-                                            <option value="">선택</option>
-                                            <option value="인터뷰확정">인터뷰확정</option>
-                                            <option value="상담확정">상담확정</option>
-                                            <option value="연락처확보">연락처확보</option>
-                                            <option value="공격스피치">공격스피치</option>
-                                        </select>
-                                    </div>
-                                    <div className="flex justify-end items-center">
-                                        <button
-                                            onClick={() => {
-                                                const updated = [...result];
-                                                updated.splice(idx, 1);
-                                                setResult(updated);
-                                            }}
-                                            className="text-red-500 hover:text-red-700 text-xs"
-                                        >
-                                            삭제
-                                        </button>
-                                    </div>
+                                <div className="mt-6">
+                                    <label className="block text-xs font-semibold text-gray-600">유형</label>
+                                    <input
+                                        type="text"
+                                        value={p.type}
+                                        onChange={(e) => {
+                                            const updated = [...result];
+                                            updated[idx].type = e.target.value;
+                                            setResult(updated);
+                                        }}
+                                        className="w-full border rounded-lg p-4 text-sm bg-white focus:ring-2 focus:ring-blue-400"
+                                        placeholder="유형"
+                                    />
                                 </div>
                             </div>
                         ))}
                     </div>
                 </section>
 
-                <section>
-                    <label className="block text-xs font-semibold mb-1">💬 피드백</label>
-                    <div className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-700">잘한점</label>
-                            <textarea
-                                value={feedback.strengths}
-                                onChange={(e) => setFeedback({ ...feedback, strengths: e.target.value })}
-                                className="w-full border rounded-xl p-2 bg-white shadow-inner text-sm"
-                                rows={3}
-                                placeholder="잘한 점을 입력하세요"
-                            />
-                        </div>
+                {/* Feedback */}
+                <section className="border-t pt-6">
+                    <div className="mb-6">
+                        <label className="block text-sm font-semibold text-gray-700">💬 잘한점</label>
+                        <textarea
+                            rows={4}
+                            value={feedback.strengths}
+                            onChange={(e) => setFeedback({ ...feedback, strengths: e.target.value })}
+                            placeholder="잘한점"
+                            className="w-full border rounded-lg p-4 mt-2 bg-gray-50 focus:ring-2 focus:ring-blue-400"
+                        />
+                    </div>
+                    <div className="mb-6">
+                        <label className="block text-sm font-semibold text-gray-700">💬 보완할 점</label>
+                        <textarea
+                            rows={4}
+                            value={feedback.improvements}
+                            onChange={(e) => setFeedback({ ...feedback, improvements: e.target.value })}
+                            placeholder="개선점"
+                            className="w-full border rounded-lg p-4 mt-2 bg-gray-50 focus:ring-2 focus:ring-blue-400"
+                        />
+                    </div>
 
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-700">보완할 점</label>
-                            <textarea
-                                value={feedback.improvements}
-                                onChange={(e) => setFeedback({ ...feedback, improvements: e.target.value })}
-                                className="w-full border rounded-xl p-2 bg-white shadow-inner text-sm"
-                                rows={3}
-                                placeholder="보완할 점을 입력하세요"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-700">다음번 적용 계획</label>
-                            <textarea
-                                value={feedback.futurePlans}
-                                onChange={(e) => setFeedback({ ...feedback, futurePlans: e.target.value })}
-                                className="w-full border rounded-xl p-2 bg-white shadow-inner text-sm"
-                                rows={3}
-                                placeholder="다음번 적용 계획을 입력하세요"
-                            />
-                        </div>
+                    <div>
+                        <label className="block text-sm font-semibold text-gray-700">💬 다음에 적용할 점</label>
+                        <textarea
+                            rows={4}
+                            value={feedback.futurePlans}
+                            onChange={(e) => setFeedback({ ...feedback, futurePlans: e.target.value })}
+                            placeholder="다음에는 이런 부분을 보완 해서 해보겠다"
+                            className="w-full border rounded-lg p-4 mt-2 bg-gray-50 focus:ring-2 focus:ring-blue-400"
+                        />
                     </div>
                 </section>
-            </div>
 
-            <div className="mt-6 flex flex-col sm:flex-row justify-center gap-4">
-                <button
-                    onClick={handleUpdate}
-                    disabled={loading || isUpdating}
-                    className={`flex-1 sm:flex-none py-2 px-5 rounded-xl shadow text-sm
-        ${isUpdating ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600 text-white'}`}
-                >
-                    {isUpdating ? '⏳ 수정 중...' : '✅ 수정하기'}
-                </button>
-
-                <button
-                    onClick={handleDelete}
-                    disabled={loading || isUpdating}
-                    className="flex-1 sm:flex-none bg-red-500 hover:bg-red-600 text-white py-2 px-5 rounded-xl shadow text-sm"
-                >
-                    🗑️ 삭제하기
-                </button>
-            </div>
-
-            <div className="mt-4 text-center">
-                <Link
-                    href="/"
-                    className="text-xs text-blue-600 hover:underline"
-                >
-                    ← 돌아가기
-                </Link>
+                {/* Buttons */}
+                <div className="mt-8 flex justify-between gap-4">
+                    <Link href={`/activities/${activityId}/edit`} passHref>
+                        <button
+                            disabled={!canEdit}
+                            className={`flex items-center ${
+                                !canEdit ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500'
+                            } text-white py-2 px-4 rounded-lg`}
+                        >
+                            <FaEdit className="mr-2" /> 활동내용 수정
+                        </button>
+                    </Link>
+                    <div className="flex gap-4">
+                        <Link href="/" passHref>
+                            <button className="flex items-center bg-yellow-500 text-white py-2 px-4 rounded-lg">
+                                <FaArrowLeft className="mr-2" /> 홈으로
+                            </button>
+                        </Link>
+                        <button
+                            onClick={handleDelete}
+                            disabled={!canEdit}
+                            className={`flex items-center ${
+                                !canEdit ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-500'
+                            } text-white py-2 px-4 rounded-lg`}
+                        >
+                            <FaTrash className="mr-2" /> 삭제
+                        </button>
+                        <button
+                            onClick={handleUpdate}
+                            disabled={isUpdating}
+                            className="flex items-center bg-green-500 text-white py-2 px-4 rounded-lg"
+                        >
+                            {isUpdating ? (
+                                <>
+                                    <FaTruckLoading className="mr-2 animate-spin" /> 업데이트 중...
+                                </>
+                            ) : (
+                                <>
+                                    <FaSave className="mr-2" /> 업데이트
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </div>
             </div>
         </main>
     );

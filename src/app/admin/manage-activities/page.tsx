@@ -8,6 +8,8 @@ interface Activity {
     region: string;
     date: string;
     title: string;
+    host: string;
+    hostnumber: string;
     description: string;
     start_time: string;
     end_time: string;
@@ -82,10 +84,7 @@ export default function ManageActivities() {
                 <div>
                     <h2 className="text-2xl font-semibold mb-3">{selectedRegion} 활동</h2>
                     {Object.keys(groupedActivities[selectedRegion]).map((date) => (
-                        <div
-                            key={date}
-                            className="mb-4"
-                        >
+                        <div key={date} className="mb-4">
                             <button
                                 onClick={() => handleDateClick(date)}
                                 className={`block w-full text-left px-4 py-2 rounded-lg font-medium ${
@@ -98,10 +97,7 @@ export default function ManageActivities() {
                             {selectedDate === date && (
                                 <div className="mt-2 pl-4 space-y-4">
                                     {groupedActivities[selectedRegion][date].map((activity) => (
-                                        <div
-                                            key={activity.id}
-                                            className="p-4 bg-white rounded-xl shadow-sm border"
-                                        >
+                                        <div key={activity.id} className="p-4 bg-white rounded-xl shadow-sm border">
                                             <p className="font-semibold text-lg">{activity.title}</p>
                                             <p className="text-sm text-gray-700">{activity.description}</p>
                                             <p className="text-sm text-gray-500">
@@ -128,10 +124,7 @@ export default function ManageActivities() {
                                                         </thead>
                                                         <tbody>
                                                             {activity.result.map((res, index) => (
-                                                                <tr
-                                                                    key={index}
-                                                                    className="border-b"
-                                                                >
+                                                                <tr key={index} className="border-b">
                                                                     <td className="px-4 py-2">{res.name}</td>
                                                                     <td className="px-4 py-2">{res.lead}</td>
                                                                     <td className="px-4 py-2">{res.team}</td>

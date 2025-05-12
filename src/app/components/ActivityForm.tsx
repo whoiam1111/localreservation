@@ -11,7 +11,9 @@ export default function ActivityForm() {
     const [startTime, setStartTime] = useState('');
     const [endTime, setEndTime] = useState('');
     const [tool, setTool] = useState('');
-
+    const [host, setHost] = useState('');
+    const [hostNumber, setHostNumber] = useState('');
+    const [isHostUnspecified, setIsHostUnspecified] = useState(false);
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -22,6 +24,8 @@ export default function ActivityForm() {
             startTime: `${date}T${startTime}`,
             endTime: `${date}T${endTime}`,
             tool,
+            host: isHostUnspecified ? '미정' : host, // 주관자 체크박스 상태에 따라 "미정" 또는 입력된 주관자
+            hostNumber, // 주관자 연락처
         };
 
         await fetch('/api/activities', {
@@ -35,7 +39,7 @@ export default function ActivityForm() {
 
     return (
         <main className="max-w-md mx-auto px-4 py-8">
-            <h1 className="text-2xl font-bold text-center  mb-6">📋 활동 등록</h1>
+            <h1 className="text-2xl font-bold text-center mb-6">📋 활동 등록</h1>
             <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-2xl shadow-md">
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">소속 지역</label>
@@ -111,6 +115,43 @@ export default function ActivityForm() {
                         required
                     />
                 </div>
+
+                {/* 주관자 체크박스 */}
+                <div className="flex items-center gap-2">
+                    <input
+                        type="checkbox"
+                        checked={isHostUnspecified}
+                        onChange={(e) => setIsHostUnspecified(e.target.checked)}
+                        className="w-4 h-4"
+                    />
+                    <label className="text-sm font-medium text-gray-700">주관자 미정</label>
+                </div>
+
+                {/* 주관자 이름 입력 필드 (미정이 아닐 경우) */}
+                {!isHostUnspecified && (
+                    <>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">주관자</label>
+                            <input
+                                type="text"
+                                value={host}
+                                onChange={(e) => setHost(e.target.value)}
+                                className="w-full p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">주관자 연락처</label>
+                            <input
+                                type="text"
+                                value={hostNumber}
+                                onChange={(e) => setHostNumber(e.target.value)}
+                                className="w-full p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
+                                required
+                            />
+                        </div>
+                    </>
+                )}
 
                 <button
                     type="submit"

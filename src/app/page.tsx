@@ -61,10 +61,17 @@ export default function HomePage() {
             const data = await res.json();
             console.log(data);
 
-            setBibleContent(data || null);
+            if (!data || Object.keys(data).length === 0) {
+                alert('📖 오늘 등록된 성구가 없습니다.');
+                setBibleContent(null);
+            } else {
+                setBibleContent(data);
+            }
+
             setIsModalOpen(true);
         } catch (error) {
             console.error('성구를 가져오는 데 실패했습니다:', error);
+            alert('📖 오늘 등록된 성구가 없습니다.');
             setBibleContent(null);
             setIsModalOpen(true);
         }
@@ -129,11 +136,7 @@ export default function HomePage() {
 
             <Calendar />
 
-            <Modal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                content={bibleContent}
-            />
+            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} content={bibleContent} />
         </main>
     );
 }

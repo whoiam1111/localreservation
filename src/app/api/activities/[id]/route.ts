@@ -31,11 +31,16 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 // PUT: 활동 정보 수정
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-    const { result, feedback, participant_count, start_time, end_time } = await req.json();
+    const { result, feedback, participant_count, start_time, end_time, host, host_number, isHostUnspecified } =
+        await req.json();
 
     if (!id || result === undefined || feedback === undefined || participant_count === undefined) {
         return NextResponse.json({ error: '필수 값이 누락되었습니다.' }, { status: 400 });
     }
+
+    // 주관자 미정 처리
+    const finalHost = isHostUnspecified ? '미정' : host;
+    const finalHostNumber = finalHost === '미정' ? null : host_number;
 
     // HH:MM 형식으로 시간 변환
     const formattedStartTime = start_time ? formatTimeToHHMM(start_time) : undefined;
@@ -43,7 +48,15 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const { data, error } = await supabase
         .from('activities')
-        .update({ result, feedback, participant_count, start_time: formattedStartTime, end_time: formattedEndTime })
+        .update({
+            result,
+            feedback,
+            participant_count,
+            start_time: formattedStartTime,
+            end_time: formattedEndTime,
+            host: finalHost,
+            hostnumber: finalHostNumber,
+        })
         .eq('id', id)
         .select('*')
         .maybeSingle();

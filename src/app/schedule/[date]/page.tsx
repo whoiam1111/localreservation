@@ -2,17 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { notFound, useParams } from 'next/navigation';
-
-interface Activity {
-    id: string;
-    region: string;
-    tool: string;
-    location: string;
-    start_time: string;
-    end_time: string;
-    participant_count: number;
-    date: string; // date 속성이 이미 포함됨
-}
+import Link from 'next/link';
 
 export default function SchedulePage() {
     const [activities, setActivities] = useState<Activity[]>([]);
@@ -59,23 +49,24 @@ export default function SchedulePage() {
 
             <ul className="space-y-6">
                 {filteredActivities.map((a) => (
-                    <li
-                        key={a.id}
-                        className="bg-white rounded-2xl shadow-md p-5 hover:shadow-lg transition"
-                    >
-                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-                            <h2 className="text-lg font-semibold text-gray-800">🛠️ {a.tool}</h2>
-                            <span className="text-sm text-gray-500">👥 {a.participant_count}명 참여</span>
-                        </div>
+                    <li key={a.id}>
+                        <Link
+                            href={`/activities/${a.id}`}
+                            className="block bg-white rounded-2xl shadow-md p-5 hover:shadow-lg transition hover:bg-gray-50"
+                        >
+                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                                <h2 className="text-lg font-semibold text-gray-800">🛠️ {a.tool}</h2>
+                                <span className="text-sm text-gray-500">👥 {a.participant_count}명 참여</span>
+                            </div>
 
-                        <p className="mt-2 text-gray-600">
-                            📍 {a.location} ({a.region})
-                        </p>
+                            <p className="mt-2 text-gray-600">
+                                📍 {a.location} ({a.region})
+                            </p>
 
-                        <div className="mt-2 text-sm text-gray-700">
-                            ⏰ {new Date(a.start_time).toLocaleTimeString()} ~{' '}
-                            {new Date(a.end_time).toLocaleTimeString()}
-                        </div>
+                            <div className="mt-2 text-sm text-gray-700">
+                                ⏰ {a.start_time} ~ {a.end_time}
+                            </div>
+                        </Link>
                     </li>
                 ))}
             </ul>
