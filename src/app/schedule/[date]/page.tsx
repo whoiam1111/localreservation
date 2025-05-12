@@ -44,7 +44,6 @@ export default function SchedulePage() {
 
     useEffect(() => {
         if (date && activities.length > 0) {
-            // 날짜 형식이 "YYYY-MM-DD"라면 `a.date`와 `date`를 비교
             const filtered = activities.filter((a: Activity) => a.date === date);
             setFilteredActivities(filtered);
         }

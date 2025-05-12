@@ -21,10 +21,15 @@ interface Activity {
 export default function ActivityDetailClient() {
     const [activity, setActivity] = useState<Activity | null>(null);
     const [result, setResult] = useState([{ name: '', phone: '', lead: '', type: '', team: '' }]);
-    const [feedback, setFeedback] = useState('');
+    const [feedback, setFeedback] = useState({
+        strengths: '', // 잘한점
+        improvements: '', // 보완할점
+        futurePlans: '', // 다음번 적용 계획
+    });
+
     const [participantCount, setParticipantCount] = useState(0);
     const [loading, setLoading] = useState(true);
-
+    const [isUpdating, setIsUpdating] = useState(false);
     const router = useRouter();
     const { id: activityId } = useParams() as { id: string };
 
@@ -58,11 +63,19 @@ export default function ActivityDetailClient() {
             return;
         }
 
+        setIsUpdating(true); // 시작 시 상태 true
+
+        const feedbackText = `
+            잘한 점: ${feedback.strengths}
+            보완할 점: ${feedback.improvements}
+            다음번 적용 계획: ${feedback.futurePlans}
+        `;
+
         try {
             const res = await fetch(`/api/activities/${activityId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ result, feedback, participant_count: participantCount }),
+                body: JSON.stringify({ result, feedback: feedbackText, participant_count: participantCount }),
             });
 
             if (!res.ok) throw new Error('업데이트 실패');
@@ -93,6 +106,8 @@ export default function ActivityDetailClient() {
         } catch (err) {
             console.error('업데이트 오류:', err);
             alert('업데이트 실패');
+        } finally {
+            setIsUpdating(false); // 끝나면 false
         }
     };
 
@@ -165,7 +180,9 @@ export default function ActivityDetailClient() {
 
                 <section className="border-t pt-4">
                     <div className="flex justify-between items-center mb-2">
-                        <label className="block text-sm font-semibold">📊 결과 입력</label>
+                        <label className="block text-sm font-semibold">
+                            📊 결과 입력 <span className="text-gray-500 text-xs">(총 {result.length}건)</span>
+                        </label>
                         <button
                             onClick={() =>
                                 setResult([...result, { name: '', lead: '', phone: '', type: '', team: '' }])
@@ -288,27 +305,56 @@ export default function ActivityDetailClient() {
 
                 <section>
                     <label className="block text-xs font-semibold mb-1">💬 피드백</label>
-                    <textarea
-                        value={feedback}
-                        onChange={(e) => setFeedback(e.target.value)}
-                        className="w-full max-w-md border rounded-xl p-2 mt-1 bg-white shadow-inner text-sm"
-                        rows={3}
-                        placeholder="피드백을 입력하세요"
-                    />
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700">잘한점</label>
+                            <textarea
+                                value={feedback.strengths}
+                                onChange={(e) => setFeedback({ ...feedback, strengths: e.target.value })}
+                                className="w-full border rounded-xl p-2 bg-white shadow-inner text-sm"
+                                rows={3}
+                                placeholder="잘한 점을 입력하세요"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700">보완할 점</label>
+                            <textarea
+                                value={feedback.improvements}
+                                onChange={(e) => setFeedback({ ...feedback, improvements: e.target.value })}
+                                className="w-full border rounded-xl p-2 bg-white shadow-inner text-sm"
+                                rows={3}
+                                placeholder="보완할 점을 입력하세요"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700">다음번 적용 계획</label>
+                            <textarea
+                                value={feedback.futurePlans}
+                                onChange={(e) => setFeedback({ ...feedback, futurePlans: e.target.value })}
+                                className="w-full border rounded-xl p-2 bg-white shadow-inner text-sm"
+                                rows={3}
+                                placeholder="다음번 적용 계획을 입력하세요"
+                            />
+                        </div>
+                    </div>
                 </section>
             </div>
 
             <div className="mt-6 flex flex-col sm:flex-row justify-center gap-4">
                 <button
                     onClick={handleUpdate}
-                    disabled={loading}
-                    className="flex-1 sm:flex-none bg-green-500 hover:bg-green-600 text-white py-2 px-5 rounded-xl shadow text-sm"
+                    disabled={loading || isUpdating}
+                    className={`flex-1 sm:flex-none py-2 px-5 rounded-xl shadow text-sm
+        ${isUpdating ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600 text-white'}`}
                 >
-                    ✅ 수정하기
+                    {isUpdating ? '⏳ 수정 중...' : '✅ 수정하기'}
                 </button>
+
                 <button
                     onClick={handleDelete}
-                    disabled={loading}
+                    disabled={loading || isUpdating}
                     className="flex-1 sm:flex-none bg-red-500 hover:bg-red-600 text-white py-2 px-5 rounded-xl shadow text-sm"
                 >
                     🗑️ 삭제하기
