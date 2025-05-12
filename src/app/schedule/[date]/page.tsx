@@ -11,6 +11,7 @@ interface Activity {
     start_time: string;
     end_time: string;
     participant_count: number;
+    date: string; // date 속성이 이미 포함됨
 }
 
 export default function SchedulePage() {
@@ -43,7 +44,8 @@ export default function SchedulePage() {
 
     useEffect(() => {
         if (date && activities.length > 0) {
-            const filtered = activities.filter((a: Activity) => a.start_time.startsWith(date));
+            // 날짜 형식이 "YYYY-MM-DD"라면 `a.date`와 `date`를 비교
+            const filtered = activities.filter((a: Activity) => a.date === date);
             setFilteredActivities(filtered);
         }
     }, [activities, date]);
@@ -58,7 +60,10 @@ export default function SchedulePage() {
 
             <ul className="space-y-6">
                 {filteredActivities.map((a) => (
-                    <li key={a.id} className="bg-white rounded-2xl shadow-md p-5 hover:shadow-lg transition">
+                    <li
+                        key={a.id}
+                        className="bg-white rounded-2xl shadow-md p-5 hover:shadow-lg transition"
+                    >
                         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                             <h2 className="text-lg font-semibold text-gray-800">🛠️ {a.tool}</h2>
                             <span className="text-sm text-gray-500">👥 {a.participant_count}명 참여</span>
