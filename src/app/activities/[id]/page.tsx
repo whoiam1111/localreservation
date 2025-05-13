@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import Loading from '@/app/components/Loading';
 import { FaSave, FaTrash, FaArrowLeft, FaTruckLoading, FaEdit } from 'react-icons/fa';
+import type { Activity, Participant, Feedback } from '@/app/lib/type';
 
 export default function ActivityDetailClient() {
     const [activity, setActivity] = useState<Activity | null>(null);
@@ -15,8 +16,6 @@ export default function ActivityDetailClient() {
     const [isUpdating, setIsUpdating] = useState(false);
     const router = useRouter();
     const { id: activityId } = useParams() as { id: string };
-
-    const [canEdit, setCanEdit] = useState(false);
 
     useEffect(() => {
         if (!activityId) return;
@@ -31,11 +30,6 @@ export default function ActivityDetailClient() {
                 setResult(act.result || [{ name: '', phone: '', lead: '', type: '', team: '' }]);
                 setFeedback(act.feedback ? act.feedback : { strengths: '', improvements: '', futurePlans: '' });
                 setParticipantCount(act.participant_count || 0);
-
-                const startTime = new Date(act.start_time).getTime();
-                const currentTime = Date.now();
-                const threeHoursBeforeStart = startTime - 3 * 60 * 60 * 1000;
-                setCanEdit(currentTime < threeHoursBeforeStart);
             } catch (err) {
                 console.error('활동 정보 조회 오류:', err);
                 alert('활동 정보를 불러오지 못했습니다.');
@@ -100,6 +94,9 @@ export default function ActivityDetailClient() {
     };
 
     const handleDelete = async () => {
+        const confirmed = confirm('정말로 이 활동을 삭제하시겠습니까? 삭제하면 되돌릴 수 없습니다.');
+        if (!confirmed) return;
+
         try {
             const res = await fetch(`/api/activities/${activityId}`, { method: 'DELETE' });
             if (!res.ok) throw new Error('삭제 실패');
@@ -159,7 +156,6 @@ export default function ActivityDetailClient() {
                     </p>
                 </section>
 
-                {/* Participant Count */}
                 <section className="border-t pt-6">
                     <label className="block text-sm font-semibold text-gray-700">👥 참여 인원 수</label>
                     <input
@@ -175,7 +171,6 @@ export default function ActivityDetailClient() {
                     />
                 </section>
 
-                {/* Result Input */}
                 <section className="border-t pt-6">
                     <div className="flex justify-between items-center mb-4">
                         <label className="text-sm font-semibold text-gray-700">
@@ -280,7 +275,6 @@ export default function ActivityDetailClient() {
                     </div>
                 </section>
 
-                {/* Feedback */}
                 <section className="border-t pt-6">
                     <div className="mb-6">
                         <label className="block text-sm font-semibold text-gray-700">💬 잘한점</label>
@@ -315,15 +309,9 @@ export default function ActivityDetailClient() {
                     </div>
                 </section>
 
-                {/* Buttons */}
                 <div className="mt-8 flex justify-between gap-4">
                     <Link href={`/activities/${activityId}/edit`} passHref>
-                        <button
-                            disabled={!canEdit}
-                            className={`flex items-center ${
-                                !canEdit ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500'
-                            } text-white py-2 px-4 rounded-lg`}
-                        >
+                        <button className="flex items-center bg-blue-500 text-white py-2 px-4 rounded-lg">
                             <FaEdit className="mr-2" /> 활동내용 수정
                         </button>
                     </Link>
@@ -335,10 +323,7 @@ export default function ActivityDetailClient() {
                         </Link>
                         <button
                             onClick={handleDelete}
-                            disabled={!canEdit}
-                            className={`flex items-center ${
-                                !canEdit ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-500'
-                            } text-white py-2 px-4 rounded-lg`}
+                            className="flex items-center bg-red-500 text-white py-2 px-4 rounded-lg"
                         >
                             <FaTrash className="mr-2" /> 삭제
                         </button>

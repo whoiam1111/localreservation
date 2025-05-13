@@ -1,4 +1,6 @@
-interface Activity {
+// src/app/lib/type.ts
+
+export interface Activity {
     id: string;
     date: string;
     location: string;
@@ -14,7 +16,7 @@ interface Activity {
     participant_count: number;
 }
 
-interface Participant {
+export interface Participant {
     name: string;
     phone: string;
     lead: string;
@@ -22,7 +24,7 @@ interface Participant {
     team: string;
 }
 
-interface Feedback {
+export interface Feedback {
     strengths: string;
     improvements: string;
     futurePlans: string;

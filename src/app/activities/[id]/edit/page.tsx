@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/app/lib/supabase';
 import Loading from '@/app/components/Loading';
 import { REGION_OPTIONS } from '@/app/lib/constants';
-
+import type { Activity } from '@/app/lib/type';
 export default function EditActivityClient() {
     const [activity, setActivity] = useState<Activity | null>(null);
     const [isHostUnspecified, setIsHostUnspecified] = useState(true); // "미정" 체크 여부

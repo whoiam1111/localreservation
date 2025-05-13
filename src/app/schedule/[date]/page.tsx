@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { notFound, useParams } from 'next/navigation';
 import Link from 'next/link';
-
+import type { Activity } from '@/app/lib/type';
 export default function SchedulePage() {
     const [activities, setActivities] = useState<Activity[]>([]);
     const [filteredActivities, setFilteredActivities] = useState<Activity[]>([]);
