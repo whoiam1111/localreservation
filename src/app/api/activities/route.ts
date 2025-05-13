@@ -13,6 +13,8 @@ interface ActivityBody {
     tool: string;
     region: string;
     date: string;
+    host: string;
+    hostNumber: string;
 }
 
 const formatTimeToHHMM = (dateStr: string): string => {
@@ -25,7 +27,7 @@ const formatTimeToHHMM = (dateStr: string): string => {
 export async function POST(req: Request) {
     try {
         const body: ActivityBody = await req.json();
-        const { location, startTime, endTime, tool, region, date } = body;
+        const { location, startTime, endTime, tool, region, date, host, hostNumber } = body;
 
         if (!location || !startTime || !endTime || !region || !date) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -44,10 +46,12 @@ export async function POST(req: Request) {
             {
                 region,
                 location,
-                start_time: formattedStartTime, // HH:MM 형식으로 저장
-                end_time: formattedEndTime, // HH:MM 형식으로 저장
-                date: new Date(date).toISOString().split('T')[0], // YYYY-MM-DD 형식으로 저장
+                start_time: formattedStartTime,
+                end_time: formattedEndTime,
+                date: new Date(date).toISOString().split('T')[0],
                 tool,
+                host,
+                hostnumber: hostNumber,
             },
         ]);
 
