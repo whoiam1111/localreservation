@@ -23,6 +23,36 @@
     color: #333;
 }
 
+.perspective {
+    perspective: 1000px;
+  }
+  
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+  
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+  
+  .rotate-y-180 {
+    transform: rotateY(180deg);
+  }
+  
+  @keyframes spinOnce {
+    from {
+      transform: rotateY(0deg);
+    }
+    to {
+      transform: rotateY(360deg);
+    }
+  }
+  
+  .animate-spinOnce {
+    animation: spinOnce 1.5s ease-in-out;
+  }
+  
+
 /* 모바일 대응 스타일 */
 @media (max-width: 768px) {
     .fc .fc-toolbar-title {
