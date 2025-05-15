@@ -1,79 +1,81 @@
 @import 'tailwindcss';
-/* globals.css 또는 tailwind.config.ts에서 설정 필요 */
+
+/* react-calendar 커스터마이징 */
 .react-calendar__tile--now {
-    background: #f0f4ff;
-    border-radius: 9999px;
+  background: #f0f4ff;
+  border-radius: 9999px;
 }
 .react-calendar__tile--active {
-    background: #2563eb;
-    color: white;
-    border-radius: 9999px;
+  background: #2563eb;
+  color: white;
+  border-radius: 9999px;
 }
-/* 기본 버튼 스타일 */
+
+/* FullCalendar 기본 버튼 스타일 */
 .fc .fc-button {
-    padding: 6px 12px;
-    font-size: 14px;
-    border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 14px;
+  border-radius: 6px;
 }
 
-/* 제목 스타일 */
+/* FullCalendar 제목 스타일 */
 .fc .fc-toolbar-title {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #333;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
 }
 
+/* 커스텀 3D 카드 스타일 */
 .perspective {
-    perspective: 1000px;
+  perspective: 1000px;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+@keyframes spinOnce {
+  from {
+    transform: rotateY(0deg);
   }
-  
-  .preserve-3d {
-    transform-style: preserve-3d;
+  to {
+    transform: rotateY(360deg);
   }
-  
-  .backface-hidden {
-    backface-visibility: hidden;
-  }
-  
-  .rotate-y-180 {
-    transform: rotateY(180deg);
-  }
-  
-  @keyframes spinOnce {
-    from {
-      transform: rotateY(0deg);
-    }
-    to {
-      transform: rotateY(360deg);
-    }
-  }
-  
-  .animate-spinOnce {
-    animation: spinOnce 1.5s ease-in-out;
-  }
-  
+}
+
+.animate-spinOnce {
+  animation: spinOnce 1.5s ease-in-out;
+}
 
 /* 모바일 대응 스타일 */
 @media (max-width: 768px) {
-    .fc .fc-toolbar-title {
-        font-size: 1.1rem;
-        text-align: center;
-    }
+  .fc .fc-toolbar-title {
+    font-size: 1.1rem;
+    text-align: center;
+  }
 
-    .fc .fc-toolbar {
-        flex-direction: column;
-        gap: 6px;
-    }
+  .fc .fc-toolbar {
+    flex-direction: column;
+    gap: 6px;
+  }
 
-    .fc .fc-button {
-        font-size: 12px;
-        padding: 4px 8px;
-    }
+  .fc .fc-button {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
 
-    .fc .fc-toolbar-chunk {
-        display: flex;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 4px;
-    }
+  .fc .fc-toolbar-chunk {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
 }
