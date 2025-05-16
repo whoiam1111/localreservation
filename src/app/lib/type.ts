@@ -33,53 +33,50 @@ export interface Feedback {
 // types/supabase.ts
 export type Database = {
     public: {
-      Tables: {
-        today_bible_verses: {
-          Row: {
-            id: number;
-            book_name: string;
-            chapter: number;
-            verse: string;
-            text: string;
-            card_type: string;
-          };
-          Insert: {
-            book_name: string;
-            chapter: number;
-            verse: string;
-            text: string;
-            card_type: string;
-          };
-          Update: {
-            book_name: string;
-            chapter: number;
-            verse: string;
-            text: string;
-            card_type: string;
-          };
+        Tables: {
+            today_bible_verses: {
+                Row: {
+                    id: number;
+                    book_name: string;
+                    chapter: number;
+                    verse: string;
+                    text: string;
+                    card_type: string;
+                };
+                Insert: {
+                    book_name: string;
+                    chapter: number;
+                    verse: string;
+                    text: string;
+                    card_type: string;
+                };
+                Update: {
+                    book_name: string;
+                    chapter: number;
+                    verse: string;
+                    text: string;
+                    card_type: string;
+                };
+            };
         };
-      };
     };
-  };
+};
 
-  export type BibleVerse = {
-    id: number;
+export type BibleVerse = {
     book_name: string;
     chapter: number;
-    verse: string;
+    verse: string; // string으로 수정
     text: string;
-    card_type: 'courage' | 'wish' | 'evangelism'; // card_type은 문자열로 고정
-  };
-  
-  export type ModalProps = {
+    card_type: string;
+};
+export type ModalProps = {
     isOpen: boolean;
     onClose: () => void;
     content?: {
-      book_name: string;
-      chapter: number;
-      verse: number;
-      text: string;
+        book_name: string;
+        chapter: number;
+        verse: number;
+        text: string;
     } | null;
     children?: React.ReactNode;
-  };
-  
+};

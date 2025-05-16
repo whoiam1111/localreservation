@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import Loading from '@/app/components/Loading';
-import { FaSave, FaTrash, FaArrowLeft, FaTruckLoading, FaEdit } from 'react-icons/fa';
+import { FaSave, FaTrash, FaArrowLeft, FaTruckLoading, FaEdit, FaMinusCircle } from 'react-icons/fa';
 import type { Activity, Participant, Feedback } from '@/app/lib/type';
 
 export default function ActivityDetailClient() {
@@ -107,6 +107,12 @@ export default function ActivityDetailClient() {
         }
     };
 
+    const removeParticipant = (index: number) => {
+        const updated = [...result];
+        updated.splice(index, 1);
+        setResult(updated.length > 0 ? updated : [{ name: '', phone: '', lead: '', type: '', team: '' }]);
+    };
+
     if (loading) return <Loading />;
     if (!activity) return <p className="text-center py-10 text-red-500 text-sm">활동 정보를 찾을 수 없습니다.</p>;
 
@@ -117,6 +123,7 @@ export default function ActivityDetailClient() {
             </h1>
 
             <div className="bg-white rounded-3xl shadow-xl p-8 space-y-6">
+                {/* 기본 정보 및 시간 */}
                 <section className="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-6">
                     <div>
                         <p className="text-sm text-gray-600">
@@ -140,6 +147,7 @@ export default function ActivityDetailClient() {
                     </div>
                 </section>
 
+                {/* 시간, 주관자 정보 */}
                 <section className="border-t pt-6">
                     <p className="text-sm font-semibold text-gray-700">⏰ 시간</p>
                     <div className="flex flex-wrap gap-8 mt-2 text-sm text-gray-600">
@@ -156,6 +164,7 @@ export default function ActivityDetailClient() {
                     </p>
                 </section>
 
+                {/* 참여 인원 */}
                 <section className="border-t pt-6">
                     <label className="block text-sm font-semibold text-gray-700">👥 참여 인원 수</label>
                     <input
@@ -171,6 +180,7 @@ export default function ActivityDetailClient() {
                     />
                 </section>
 
+                {/* 참여자 결과 */}
                 <section className="border-t pt-6">
                     <div className="flex justify-between items-center mb-4">
                         <label className="text-sm font-semibold text-gray-700">
@@ -188,7 +198,16 @@ export default function ActivityDetailClient() {
 
                     <div className="space-y-6">
                         {result.map((p, idx) => (
-                            <div key={idx} className="border rounded-lg p-6 bg-gray-50 shadow-md">
+                            <div key={idx} className="border rounded-lg p-6 bg-gray-50 shadow-md relative">
+                                {result.length > 1 && (
+                                    <button
+                                        onClick={() => removeParticipant(idx)}
+                                        className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+                                        title="참여자 삭제"
+                                    >
+                                        <FaMinusCircle />
+                                    </button>
+                                )}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                     <div>
                                         <label className="block text-xs font-semibold text-gray-600">이름</label>
@@ -275,6 +294,7 @@ export default function ActivityDetailClient() {
                     </div>
                 </section>
 
+                {/* 피드백 */}
                 <section className="border-t pt-6">
                     <div className="mb-6">
                         <label className="block text-sm font-semibold text-gray-700">💬 잘한점</label>
@@ -282,8 +302,8 @@ export default function ActivityDetailClient() {
                             rows={4}
                             value={feedback.strengths}
                             onChange={(e) => setFeedback({ ...feedback, strengths: e.target.value })}
-                            placeholder="잘한점"
                             className="w-full border rounded-lg p-4 mt-2 bg-gray-50 focus:ring-2 focus:ring-blue-400"
+                            placeholder="잘한점"
                         />
                     </div>
                     <div className="mb-6">
@@ -292,23 +312,23 @@ export default function ActivityDetailClient() {
                             rows={4}
                             value={feedback.improvements}
                             onChange={(e) => setFeedback({ ...feedback, improvements: e.target.value })}
-                            placeholder="개선점"
                             className="w-full border rounded-lg p-4 mt-2 bg-gray-50 focus:ring-2 focus:ring-blue-400"
+                            placeholder="개선점"
                         />
                     </div>
-
                     <div>
                         <label className="block text-sm font-semibold text-gray-700">💬 다음에 적용할 점</label>
                         <textarea
                             rows={4}
                             value={feedback.futurePlans}
                             onChange={(e) => setFeedback({ ...feedback, futurePlans: e.target.value })}
-                            placeholder="다음에는 이런 부분을 보완 해서 해보겠다"
                             className="w-full border rounded-lg p-4 mt-2 bg-gray-50 focus:ring-2 focus:ring-blue-400"
+                            placeholder="다음에는 이런 부분을 보완 해서 해보겠다"
                         />
                     </div>
                 </section>
 
+                {/* 버튼들 */}
                 <div className="mt-8 flex justify-between gap-4">
                     <Link href={`/activities/${activityId}/edit`} passHref>
                         <button className="flex items-center bg-blue-500 text-white py-2 px-4 rounded-lg">
