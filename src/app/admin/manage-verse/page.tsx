@@ -1,200 +1,174 @@
 'use client';
 
-import { supabase } from '@/app/lib/supabase';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
-type BibleSearchResult = {
-    verse_text: string;
-    book_name: string;
-    chapter_number: number;
-    verse_number: number;
-};
+export default function AdminPage() {
+  const supabase = createClientComponentClient();
 
-type TodayBibleVerse = {
-    id: number;
-    verses: string;
-    book_name: string;
-    chapter_number: number;
-    date_used: string;
-};
+  const [verses, setVerses] = useState<any[]>([]);
+  const [filteredType, setFilteredType] = useState<string>('전체');
 
-export default function ManageBibleVerses() {
-    const [searchQuery, setSearchQuery] = useState('');
-    const [searchResults, setSearchResults] = useState<BibleSearchResult[]>([]);
-    const [selectedDate, setSelectedDate] = useState('');
-    const [todayBibleVerses, setTodayBibleVerses] = useState<TodayBibleVerse[]>([]);
+  const [newBookName, setNewBookName] = useState('');
+  const [newChapter, setNewChapter] = useState<number>(1);
+  const [newVerse, setNewVerse] = useState('');
+  const [newText, setNewText] = useState('');
+  const [newCardType, setNewCardType] = useState('용기');
 
-    // 성구 검색 처리
-    const handleSearch = async () => {
-        if (searchQuery.trim()) {
-            const { data, error } = await supabase.rpc('search_bible_verses', { query: searchQuery });
+  const CARD_TYPES = ['용기', '전도', '소망'];
 
-            if (data) {
-                setSearchResults(data);
-            } else {
-                console.error('Error searching bible verses:', error);
-                alert('성구 검색에 실패했습니다.');
-            }
-        } else {
-            setSearchResults([]);
-        }
-    };
+  const fetchVerses = async () => {
+    const { data, error } = await supabase
+      .from('today_bible_verses')
+      .select('*')
+      .order('id', { ascending: false });
 
-    // 성구 선택 후 오늘의 성구로 등록
-    const handleSelectVerse = async (verse: BibleSearchResult) => {
-        const { verse_text, book_name, chapter_number } = verse;
+    if (error) {
+      console.error('성구 불러오기 오류:', error);
+    } else {
+      setVerses(data || []);
+    }
+  };
 
-        if (!selectedDate) {
-            alert('날짜를 먼저 선택해주세요.');
-            return;
-        }
+  useEffect(() => {
+    fetchVerses();
+  }, []);
 
-        const { error } = await supabase.from('today_bible_verses').insert([
-            {
-                verses: verse_text,
-                book_name,
-                chapter_number,
-                date_used: selectedDate, // 사용자가 선택한 날짜 사용
-            },
-        ]);
+  const handleAddVerse = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newBookName || !newChapter || !newVerse || !newText || !newCardType) {
+      alert('모든 항목을 입력해주세요.');
+      return;
+    }
 
-        if (error) {
-            alert('오늘의 성구 등록에 실패했습니다.');
-            console.error(error);
-        } else {
-            alert(`"${book_name} ${chapter_number}" 성구가 ${selectedDate} 날짜로 등록되었습니다!`);
-            fetchTodayBibleVerses(); // 성구가 등록된 후 리스트를 새로 고침
-        }
-    };
+    const { error } = await supabase.from('today_bible_verses').insert([{
+      book_name: newBookName,
+      chapter: newChapter,
+      verse: newVerse,
+      text: newText,
+      card_type: newCardType,
+    }]);
 
-    // 오늘의 성구 목록 가져오기 (날짜 순으로 정렬)
-    const fetchTodayBibleVerses = async () => {
-        const { data, error } = await supabase
-            .from('today_bible_verses')
-            .select('*')
-            .order('date_used', { ascending: false }); // 날짜 내림차순 정렬 (가장 최근 날짜가 위로)
+    if (error) {
+      console.error('추가 실패:', error);
+      alert('성구 추가 중 오류가 발생했습니다.');
+    } else {
+      alert('성구가 추가되었습니다.');
+      setNewBookName('');
+      setNewChapter(1);
+      setNewVerse('');
+      setNewText('');
+      setNewCardType('용기');
+      fetchVerses();
+    }
+  };
 
-        if (error) {
-            console.error('오늘의 성구 불러오기 실패:', error);
-        } else {
-            setTodayBibleVerses(data);
-        }
-    };
+  const handleDeleteVerse = async (id: number) => {
+    const confirmed = confirm('이 성구를 삭제하시겠습니까?');
+    if (!confirmed) return;
 
-    // 성구 삭제 처리
-    const handleDeleteVerse = async (id: number) => {
-        const { error } = await supabase.from('today_bible_verses').delete().match({ id });
+    const { error } = await supabase.from('today_bible_verses').delete().eq('id', id);
+    if (error) {
+      console.error('삭제 실패:', error);
+      alert('성구 삭제 중 오류가 발생했습니다.');
+    } else {
+      alert('성구가 삭제되었습니다.');
+      fetchVerses();
+    }
+  };
 
-        if (error) {
-            alert('성구 삭제에 실패했습니다.');
-            console.error(error);
-        } else {
-            alert('오늘의 성구가 삭제되었습니다.');
-            fetchTodayBibleVerses(); // 삭제 후 리스트 새로 고침
-        }
-    };
+  const filteredVerses = filteredType === '전체'
+    ? verses
+    : verses.filter((v) => v.card_type === filteredType);
 
-    // 검색어 하이라이트 처리
-    const highlightText = (text: string, query: string) => {
-        if (!query) return text;
-        const regex = new RegExp(`(${query})`, 'gi'); // 검색어 대소문자 구분 없이 매칭
-        return text.replace(regex, `<span class="bg-yellow-300">$1</span>`); // 하이라이트 스타일
-    };
+  return (
+    <div className="min-h-screen bg-gray-50 p-6">
+      <h1 className="text-2xl font-bold mb-6">📖 성구 관리</h1>
 
-    // 컴포넌트가 마운트될 때 오늘의 성구 목록 불러오기
-    useEffect(() => {
-        fetchTodayBibleVerses();
-    }, []);
+      {/* 성구 추가 폼 */}
+      <form onSubmit={handleAddVerse} className="space-y-3 mb-10 bg-white p-6 rounded shadow-md">
+        <h2 className="text-xl font-semibold mb-2">➕ 성구 추가</h2>
+        <input
+          type="text"
+          placeholder="제목 (ex. 요한복음)"
+          value={newBookName}
+          onChange={(e) => setNewBookName(e.target.value)}
+          className="w-full p-2 border rounded"
+        />
+        <input
+          type="number"
+          placeholder="장"
+          value={newChapter}
+          onChange={(e) => setNewChapter(Number(e.target.value))}
+          className="w-full p-2 border rounded"
+        />
+        <input
+          type="number"
+          placeholder="절 (ex. 4~5)"
+          value={newVerse}
+          onChange={(e) => setNewVerse(e.target.value)}
+          className="w-full p-2 border rounded"
+        />
+        <textarea
+          placeholder="본문 내용"
+          value={newText}
+          onChange={(e) => setNewText(e.target.value)}
+          className="w-full p-2 border rounded"
+        />
+        <select
+          value={newCardType}
+          onChange={(e) => setNewCardType(e.target.value)}
+          className="w-full p-2 border rounded"
+        >
+          {CARD_TYPES.map((type) => (
+            <option key={type} value={type}>{type}</option>
+          ))}
+        </select>
+        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+          추가
+        </button>
+      </form>
 
-    return (
-        <div className="p-6 max-w-4xl mx-auto bg-white shadow-md rounded-lg">
-            <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">오늘의 성구 관리</h1>
+      {/* 타입 필터 */}
+      <div className="mb-6">
+        <label className="font-medium mr-3">🧾 카드 타입별 보기:</label>
+        <select
+          value={filteredType}
+          onChange={(e) => setFilteredType(e.target.value)}
+          className="p-2 border rounded"
+        >
+          <option value="전체">전체</option>
+          {CARD_TYPES.map((type) => (
+            <option key={type} value={type}>{type}</option>
+          ))}
+        </select>
+      </div>
 
-            <div className="mb-6">
-                <h2 className="text-xl font-semibold mb-2">성구 검색</h2>
-                <div className="flex items-center gap-4 mb-4">
-                    <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="성구를 검색하세요"
-                        className="border border-gray-300 p-3 w-3/4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <button
-                        onClick={handleSearch}
-                        className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-300 flex justify-center items-center"
-                    >
-                        검색
-                    </button>
-                </div>
-
-                {/* 날짜 선택 칸을 검색창 바로 아래로 배치 */}
-                <div className="mb-6">
-                    <h2 className="text-xl font-semibold mb-2">날짜 선택</h2>
-                    <input
-                        type="date"
-                        value={selectedDate}
-                        onChange={(e) => setSelectedDate(e.target.value)}
-                        className="border border-gray-300 p-3 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                </div>
-
-                {searchResults.length > 0 && (
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                        <h3 className="font-semibold text-lg mb-2">검색 결과</h3>
-                        <div className="space-y-2 max-h-60 overflow-y-auto">
-                            {searchResults.map((result, index) => (
-                                <div
-                                    key={index}
-                                    className="cursor-pointer p-3 bg-white rounded-lg shadow hover:shadow-lg transition"
-                                    onClick={() => handleSelectVerse(result)}
-                                >
-                                    <p className="font-medium text-gray-800">
-                                        {result.book_name} {result.chapter_number}:{result.verse_number}
-                                    </p>
-                                    <p
-                                        className="text-gray-600"
-                                        dangerouslySetInnerHTML={{
-                                            __html: highlightText(result.verse_text, searchQuery),
-                                        }}
-                                    />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            <div className="mt-6">
-                <h3 className="font-medium text-lg">오늘의 성구</h3>
-                {todayBibleVerses.length > 0 ? (
-                    <ul className="space-y-4">
-                        {todayBibleVerses.map((verse) => (
-                            <li
-                                key={verse.id}
-                                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg shadow-md"
-                            >
-                                <div>
-                                    <p className="font-semibold text-gray-800">
-                                        {verse.book_name} {verse.chapter_number}: {verse.verses}
-                                    </p>
-                                    <span className="text-sm text-gray-500">
-                                        {new Date(verse.date_used).toLocaleDateString()}
-                                    </span>
-                                </div>
-                                <button
-                                    onClick={() => handleDeleteVerse(verse.id)}
-                                    className="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold"
-                                >
-                                    삭제
-                                </button>
-                            </li>
-                        ))}
-                    </ul>
-                ) : (
-                    <p className="text-gray-500">오늘의 성구가 없습니다.</p>
-                )}
-            </div>
-        </div>
-    );
+      {/* 성구 목록 */}
+      <h2 className="text-xl font-semibold mb-4">📚 등록된 성구 목록</h2>
+      {filteredVerses.length === 0 ? (
+        <p className="text-gray-500">해당 타입의 성구가 없습니다.</p>
+      ) : (
+        <ul className="space-y-3">
+          {filteredVerses.map((verse) => (
+            <li key={verse.id} className="p-4 bg-white shadow rounded flex justify-between items-start">
+              <div className='w-5/6'>
+                <p className="font-medium">
+                  {verse.book_name} {verse.chapter}:{verse.verse}
+                </p>
+                <p className="text-gray-700">{verse.text}</p>
+                <p className="text-sm text-blue-500 mt-1">카드 타입: {verse.card_type}</p>
+              </div>
+              <button
+                onClick={() => handleDeleteVerse(verse.id)}
+                className="text-red-500 hover:underline"
+              >
+                삭제
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 }
